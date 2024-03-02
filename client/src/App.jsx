@@ -1,4 +1,3 @@
-/* eslint-disable no-unused-vars */
 /* eslint-disable react/prop-types */
 import { useState, useEffect } from 'react';
 import axios from 'axios';
@@ -10,6 +9,7 @@ function App() {
   const [currentPage, setCurrentPage] = useState(1);
   const [recordsPerPage] = useState(20);
   const [sortBy, setSortBy] = useState(null);
+  const [filteredData, setFilteredData] = useState([]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -19,32 +19,31 @@ function App() {
     fetchData();
   }, []);
 
+  useEffect(() => {
+    setFilteredData(
+      data.filter(customer =>
+        customer.customer_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        customer.location.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    );
+  }, [data, searchTerm]);
+
   // Sort data by date
   const sortByDate = () => {
-    setData([...data.sort((a, b) => new Date(a.created_at) - new Date(b.created_at))]);
+    setFilteredData([...filteredData.sort((a, b) => new Date(a.created_at) - new Date(b.created_at))]);
     setSortBy('date');
   };
 
   // Sort data by time
   const sortByTime = () => {
-    setData([...data.sort((a, b) => {
-      const timeA = new Date(a.created_at).getTime();
-      const timeB = new Date(b.created_at).getTime();
-      return timeA - timeB;
-    })]);
+    setFilteredData([...filteredData.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())]);
     setSortBy('time');
   };
 
-  // Filter data based on search term
-  const filteredData = data.filter(customer =>
-    customer.customer_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    customer.location.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
   // Sort data before paginating
-  const sortedData = sortBy === 'date' ? data.sort((a, b) => new Date(a.created_at) - new Date(b.created_at)) :
-                    sortBy === 'time' ? data.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()) :
-                    data;
+  const sortedData = sortBy === 'date' ? filteredData.sort((a, b) => new Date(a.created_at) - new Date(b.created_at)) :
+    sortBy === 'time' ? filteredData.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()) :
+    filteredData;
 
   // Calculate indexes for pagination
   const indexOfLastRecord = currentPage * recordsPerPage;
